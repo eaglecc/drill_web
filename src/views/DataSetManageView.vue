@@ -5,7 +5,7 @@
         <div class="upload-container">
           <el-upload class="upload-demo" action="" :show-file-list="false" accept=".xls,.xlsx,.csv"
             :before-upload="handleFileUpload">
-            <el-button type="primary">上传 Excel 文件</el-button>
+            <el-button type="primary">上传 Excel 数据文件</el-button>
           </el-upload>
         </div>
 
@@ -17,11 +17,13 @@
           </ul>
         </el-scrollbar>
       </el-aside>
+
       <el-main class="main-wrapper">
-        <el-table v-if="excelData.length" :data="excelData" border stripe style="margin-top: 10px;">
+        <el-table v-if="excelData.length" :data="excelData" border stripe :scrollbar-always-on="true">
           <el-table-column v-for="(header, index) in headers" :key="index" :prop="header" :label="header" />
         </el-table>
       </el-main>
+
     </el-container>
   </div>
 </template>
@@ -29,17 +31,19 @@
 <script setup>
 import { ref } from 'vue'
 import * as XLSX from 'xlsx'
+import { addNewDataSet } from '@/api/DataSetApi'
 
 const excelData = ref([]) // 存储解析后的数据
 const headers = ref([]) // 存储表头信息
 const fileList = ref([]) // 存储上传的文件列表
 
-const handleFileUpload = (file) => {
+
+const handleFileUpload = async (file) => {
   return new Promise((resolve) => {
     const reader = new FileReader()
     reader.readAsArrayBuffer(file)
 
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const binaryStr = new Uint8Array(e.target.result)
       const workbook = XLSX.read(binaryStr, { type: 'array' })
 
@@ -49,7 +53,6 @@ const handleFileUpload = (file) => {
 
       if (dataJson.length > 0) {
         headers.value = dataJson[0] // 第一行是表头
-
         excelData.value = dataJson.slice(1).map((row) => {
           const rowData = {}
           headers.value.forEach((key, i) => {
@@ -57,15 +60,19 @@ const handleFileUpload = (file) => {
           })
           return rowData
         })
-        console.log("exceldata...", excelData.value)
-
-        // 新增：将上传的文件添加到文件列表
+        // 将上传的文件添加到文件列表
         fileList.value.push({
           name: file.name,
           data: excelData.value
         })
       }
 
+      // 发送上传Excel文件请求
+      try {
+        await addNewDataSet(dataJson);
+      } catch (error) {
+        console.error('上传数据集失败:', error);
+      }
       resolve(false) // 让 Element Plus 取消默认上传行为
     }
   })
@@ -110,7 +117,7 @@ const handleFileClick = (file) => {
 
 .main-wrapper {
   height: 100%;
-  padding: 20px;
+  padding: 10px;
   background-color: #fff;
 }
 
@@ -119,7 +126,8 @@ const handleFileClick = (file) => {
 }
 
 .file-list-scrollbar {
-  height: calc(100% - 100px); /* 减去上传按钮区域的高度 */
+  height: calc(100% - 100px);
+  /* 减去上传按钮区域的高度 */
   margin-top: 10px;
 }
 
