@@ -1,6 +1,6 @@
 <template>
   <div class="dataset-container">
-    <el-container class="container-wrapper">
+    <el-container class="container-wrapper" v-loading.fullscreen.lock="tableLoading" element-loading-text="加载中...">
       <el-aside class="aside-wrapper">
         <div class="upload-container">
           <el-upload class="upload-demo" action="" :show-file-list="false" accept=".xls,.xlsx,.csv"
@@ -11,14 +11,15 @@
 
         <el-scrollbar class="file-list-scrollbar">
           <ul class="file-list">
-            <li v-for="(file, index) in fileList" :key="index" @click="handleFileClick(file)">
+            <li v-for="(file, index) in fileList" :key="index" @click="handleFileClick(file)"
+              :class="{ 'active': selectedFile && selectedFile.name === file.name }">
               {{ file.name }}
             </li>
           </ul>
         </el-scrollbar>
       </el-aside>
 
-      <el-main class="main-wrapper">
+      <el-main class="main-wrapper" >
         <el-table v-if="excelData.length" :data="excelData" border stripe :scrollbar-always-on="true">
           <el-table-column v-for="(header, index) in headers" :key="index" :prop="header" :label="header" />
         </el-table>
@@ -29,17 +30,44 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import * as XLSX from 'xlsx'
-import { addNewDataSet } from '@/api/DataSetApi'
+import { addNewDataSet, getDataSetLists, getDataSetByName } from '@/api/DataSetApi'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const excelData = ref([]) // 存储解析后的数据
 const headers = ref([]) // 存储表头信息
 const fileList = ref([]) // 存储上传的文件列表
+const tableLoading = ref(false) // 表格 loading 状态控制
+const selectedFile = ref(null) // 跟踪选中的文件
 
+
+onMounted(async () => {
+  try {
+    const res = await getDataSetLists();
+    if (res.status === "success") {
+      res.data.forEach(tableName => {
+        fileList.value.push({ name: tableName })
+      })
+
+    } else {
+      ElMessage({
+        type: 'warning',
+        message: '数据集信息获取失败！'
+      });
+    }
+  } catch (error) {
+    console.error('获取数据集列表失败:', error);
+    ElMessage({
+      type: 'error',
+      message: '获取数据集列表失败'
+    });
+  }
+})
 
 const handleFileUpload = async (file) => {
   return new Promise((resolve) => {
+    tableLoading.value = true  // 开始加载
     const reader = new FileReader()
     reader.readAsArrayBuffer(file)
 
@@ -60,28 +88,77 @@ const handleFileUpload = async (file) => {
           })
           return rowData
         })
-        // 将上传的文件添加到文件列表
-        fileList.value.push({
-          name: file.name,
-          data: excelData.value
-        })
       }
 
       // 发送上传Excel文件请求
       try {
-        await addNewDataSet(dataJson);
+        const dataSetInfo = {
+          tablename: file.name,           // Excel文件名
+          sheetName: sheetName,      // 工作表名
+          headers: headers.value,     // 表头信息
+          data: excelData.value      // 表格数据
+        }
+        var res = await addNewDataSet(dataSetInfo);
+        tableLoading.value = false  // 结束表格加载
+
+        if (res.status === "table already exists") {
+          ElMessageBox({
+            type: 'warning',
+            message: '数据表已存在，请更改文件名后重试'
+          })
+        } else if (res.status === "success") {
+          ElMessage({
+            type: 'success',
+            message: '数据集上传成功'
+          })
+        } else {
+          ElMessage({
+            type: 'error',
+            message: '数据集上传失败'
+          })
+        }
       } catch (error) {
         console.error('上传数据集失败:', error);
+      }
+      // 将上传的文件添加到文件列表
+      const resv = await getDataSetLists();
+      if (resv.status === "success") {
+        fileList.value = [];
+        resv.data.forEach(tableName => {
+          fileList.value.push({ name: tableName })
+        })
       }
       resolve(false) // 让 Element Plus 取消默认上传行为
     }
   })
 }
 
-// 新增：处理文件点击事件
-const handleFileClick = (file) => {
-  excelData.value = file.data
-  headers.value = Object.keys(file.data[0] || {})
+// 处理文件点击事件
+const handleFileClick = async (file) => {
+  selectedFile.value = file // 设置选中的文件
+  tableLoading.value = true  // 开始加载
+  try {
+    const dataSetInfo = {
+      tableName: file.name,
+    }
+    var res = await getDataSetByName(dataSetInfo)
+    if (res.status === "failed") {
+      ElMessageBox({
+        type: 'warning',
+        message: '获取该数据集失败！'
+      })
+    } else {
+      headers.value = res.data.headers;
+      excelData.value = res.data.data;
+    }
+  } catch (error) {
+    ElMessage({
+      type: 'error',
+      message: '获取数据失败'
+    })
+  } finally {
+    tableLoading.value = false  // 结束加载
+  }
 }
 
 </script>
@@ -144,7 +221,16 @@ const handleFileClick = (file) => {
   transition: background-color 0.3s;
 }
 
+.file-list li.active {
+  background-color: #409EFF;
+  color: white;
+}
+
 .file-list li:hover {
   background-color: #f5f7fa;
+}
+
+.file-list li.active:hover {
+  background-color: #409EFF;
 }
 </style>

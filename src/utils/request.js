@@ -1,16 +1,15 @@
 import axios from 'axios'
 
 // 创建 axios 实例
-const request = axios.create({
+const service = axios.create({
     baseURL: 'http://localhost:8500/api/v1/', // API 基础地址
     timeout: 5000, // 请求超时时间
     withCredentials: false // 允许携带 cookies
 })
 
 // 请求拦截器
-request.interceptors.request.use(
+service.interceptors.request.use(
     config => {
-        console.log('请求拦截:', config)
         return config
     },
     error => {
@@ -19,9 +18,8 @@ request.interceptors.request.use(
 )
 
 // 响应拦截器
-request.interceptors.response.use(
+service.interceptors.response.use(
     response => {
-        console.log('响应拦截:', response)
         return response.data
     },
     error => {
@@ -41,4 +39,4 @@ request.interceptors.response.use(
 )
 
 
-export default request
+export default service

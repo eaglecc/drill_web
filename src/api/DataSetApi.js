@@ -7,3 +7,18 @@ export function addNewDataSet(data) {
       data
     })
 }
+
+export function getDataSetLists() {
+  return request({
+    url: 'dataset/getDataSetList',
+    method: 'GET'
+  })
+}
+
+export function getDataSetByName(data) {
+  return request({
+    url: 'dataset/getDataSetByName',
+    method: 'POST',
+    data
+  })
+}
