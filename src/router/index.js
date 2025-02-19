@@ -10,9 +10,14 @@ const router = createRouter({
       component: DataSetManage,
     },
     {
-      path: '/',
+      path: '/newTask',
       name: 'logPredict',
       component: () => import('../views/WellLogPredicate.vue'),
+    },
+    {
+      path: '/',
+      name: 'showWellLog',
+      component: () => import('../views/WellLogWatch.vue'),
     },
   ],
 })
