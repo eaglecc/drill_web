@@ -1,14 +1,16 @@
 <template>
   <div class="common-layout">
     <el-container>
-      <el-aside style="width: 20%; height: 100%;">
+      <el-aside style="width: 19%; height: 100%;">
+        <h3 style="text-align: center; margin: 10px 0; color: #333;">测井数据集列表</h3> 
         <el-scrollbar class="file-list-scrollbar">
           <p v-for="(file, index) in fileList" :key="index" @click="handleFileClick(file)"
             :class="['scrollbar-item', { 'scrollbar-item-selected': selectedFile === file }]">
-            {{ file.name }}</p>
+            {{ file.name.replace(/^t_dataset_/, '') }}</p>
         </el-scrollbar>
       </el-aside>
       <el-main style="width: 80%; height: 100%;">
+        <h2 v-if="selectedFile" class="dataset-name"style="text-align: center;">测井数据集：{{ selectedFile.name.replace(/^t_dataset_/, '') }}可视化面板</h2>
         <div ref="chartRef" class="chart-container"></div>
       </el-main>
     </el-container>
@@ -25,13 +27,7 @@ const fileList = ref([]) // 存储数据集文件列表
 const selectedFile = ref(null); // 存储选中的文件
 const chartRef = ref(null);
 let chartInstance = null;
-const tableDataset = ref([
-  // ['product', '2012', '2013', '2014', '2015', '2016', '2017'],
-  // ['Milk Tea', 56.5, 82.1, 88.7, 70.1, 53.4, 85.1],
-  // ['Matcha Latte', 51.1, 51.4, 55.1, 53.3, 73.8, 68.7],
-  // ['Cheese Cocoa', 40.1, 62.2, 69.5, 36.4, 45.2, 32.5],
-  // ['Walnut Brownie', 25.2, 37.1, 41.2, 18, 33.9, 49.1]
-]);
+const tableDataset = ref([]);
 
 const handleFileClick = async (file) => {
   selectedFile.value = file; // 设置选中的文件
@@ -43,17 +39,12 @@ const handleFileClick = async (file) => {
     if (res.status === "failed") {
       ElMessageBox({
         type: 'warning',
-        message: '获取该数据集失败！'
+        message: '获取数据集失败！'
       })
     } else {
       // 处理数据以适应折线图
       const headers = res.data.headers;
       const data = res.data.data;
-
-
-      // const seriesData = headers.slice(1).map(header => {
-      //   return data.map(item => parseFloat(item[header])); // 转换为浮点数
-      // });
       const seriesData = headers.slice(1).map(header => {
         const columnData = data.map(item => item[header]); // 提取当前列的数据
         // 将无效数据转换为 0
@@ -62,30 +53,26 @@ const handleFileClick = async (file) => {
           return !isNaN(num) ? num : 0; // 如果有效则返回数字，否则返回 0
         });
       });
-
-      console.log("headers...", headers)
-      console.log("seriesData...", seriesData)
-
       // 找到 "Depth" 的索引并提取数据
-      const depthIndex = headers.slice(1).indexOf('Depth'); // 找到 "Depth" 的索引
-      console.log("depthIndex..", depthIndex)
+      const depthIndex = headers.slice(1).findIndex(header =>
+        ['Depth', 'TopDepth', 'BotDepth', 'Dep'].includes(header)
+      );  // 找到 "Depth" 的索引
       const depthData = seriesData[depthIndex]; // 提取 "Depth" 数据
 
       // 更新 tableDataset，将 "Depth" 放在第一列
       tableDataset.value = [
-        ['Depth', ...depthData], // 将 "Depth" 列放在第一列
+        ['DepthXSeries', ...depthData], // 将 "Depth" 列放在第一列
         ...seriesData.map((series, index) => {
           if (index !== depthIndex) { // 排除 "Depth" 列
             return [headers[index + 1], ...series];
           }
         }).filter(Boolean) // 过滤掉 undefined
-      ];
-      console.log("tableDataset...", tableDataset.value)
+      ].filter(row => !['Depth', 'TopDepth', 'BotDepth', 'Dep'].includes(row[0])); // 过滤掉指定列
     }
   } catch (error) {
     ElMessage({
       type: 'error',
-      message: '获取数据失败'
+      message: '图标展示失败！'
     })
   }
 }
@@ -93,31 +80,52 @@ const handleFileClick = async (file) => {
 const initChart = () => {
   if (!chartRef.value) return;
   chartInstance = echarts.init(chartRef.value);
-  updateChart();
+  // updateChart();
 };
 
 const updateChart = () => {
   if (!chartInstance) return;
 
   // 动态生成 series 数组
-  const seriesCount = tableDataset.value.length - 1; // 减去第一行（标题行）
+  const seriesCount = tableDataset.value.length - 1; // 减去第一行
   const series = Array.from({ length: seriesCount }, (_, index) => ({
+    name: tableDataset.value[index + 1][0], // 确保名称与 legendData 一致
     type: 'line',
     smooth: true,
     seriesLayoutBy: 'row',
     emphasis: { focus: 'series' }
   }));
 
+  // 动态生成 legend 的数据
+  const legendData = tableDataset.value.slice(1).map(row => row[0]); // 获取第一列作为 legend
+
   const option = {
-    legend: { bottom: 0 }, // 图例放置在底部
+    legend: {
+      bottom: 0,
+      data: legendData // 使用动态生成的 legend 数据
+    },
     tooltip: { trigger: 'axis' },
     dataset: { source: tableDataset.value },
-    xAxis: { type: "category" },
-    yAxis: { type: "value" },
-    grid: { top: '20%', bottom: '15%' },
+    xAxis: {
+      type: "category",
+      name: "深度",
+      min: 0,
+      axisLine: { // 添加轴线设置
+        show: false, // 显示轴线
+        lineStyle: {
+          type: 'dashed',
+          color: '#000', // 轴线颜色
+          width: 2 // 轴线宽度
+        }
+      }
+    },
+    yAxis: {
+      type: "value"
+    },
+    grid: { top: '10%', bottom: '20%' },
     series: series
   };
-  chartInstance.setOption(option);
+  chartInstance.setOption(option, true);
 };
 
 watch(tableDataset, updateChart, { deep: true });
@@ -167,7 +175,7 @@ onBeforeUnmount(() => {
 }
 
 .file-list-scrollbar {
-  height: 90%;
+  height: 80vh;
   margin-top: 10px;
 }
 

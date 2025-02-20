@@ -13,7 +13,7 @@
           <ul class="file-list">
             <li v-for="(file, index) in fileList" :key="index" @click="handleFileClick(file)"
               :class="{ 'active': selectedFile && selectedFile.name === file.name }">
-              {{ file.name }}
+              {{ file.name.replace(/^t_dataset_/, '') }}
             </li>
           </ul>
         </el-scrollbar>
