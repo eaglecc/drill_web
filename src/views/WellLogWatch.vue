@@ -1,204 +1,294 @@
 <template>
-  <div class="common-layout">
-    <el-container>
-      <el-aside style="width: 19%; height: 100%;">
-        <h3 style="text-align: center; margin: 10px 0; color: #333;">测井数据集列表</h3> 
-        <el-scrollbar class="file-list-scrollbar">
-          <p v-for="(file, index) in fileList" :key="index" @click="handleFileClick(file)"
-            :class="['scrollbar-item', { 'scrollbar-item-selected': selectedFile === file }]">
-            {{ file.name.replace(/^t_dataset_/, '') }}</p>
-        </el-scrollbar>
-      </el-aside>
-      <el-main style="width: 80%; height: 100%;">
-        <h2 v-if="selectedFile" class="dataset-name"style="text-align: center;">测井数据集：{{ selectedFile.name.replace(/^t_dataset_/, '') }}可视化面板</h2>
-        <div ref="chartRef" class="chart-container"></div>
-      </el-main>
-    </el-container>
-  </div>
+    <div class="common-layout">
+        <el-container>
+            <el-aside style="width: 20%; height: 100%;">
+                <p
+                    style="text-align: left; font-size: 18px; margin-top: 40px;margin-bottom: 10px; margin-left: 20px; color: #333;">
+                    监测地点选择：</p>
+                <el-select v-model="formData.dataLocationsValue" placeholder="选择监测地点" size="large"
+                    style="width: 90%;  margin-left: 20px;margin-bottom: 10px;">
+                    <el-option v-for="item in dataLocationsOptions" :key="item.value" :label="item.label"
+                        :value="item.value" />
+                </el-select>
+
+                <p
+                    style="text-align: left; font-size: 18px; margin-top: 20px;margin-bottom: 10px; margin-left: 20px; color: #333;">
+                    井孔选择：</p>
+                <el-select v-model="formData.wellName" placeholder="选择井孔" size="large"
+                    style="width: 90%;  margin-left: 20px;margin-bottom: 10px;">
+                    <el-option v-for="item in wellList" :key="item.value" :label="item.label" :value="item.value" />
+                </el-select>
+
+                <p
+                    style="text-align: left; font-size: 18px; margin-top: 20px;margin-bottom: 10px; margin-left: 20px; color: #333;">
+                    测井类型/测井工具：</p>
+                <el-cascader v-model="formData.dataUtilValue" :options="cascaderOptions" placeholder="选择测井类型和工具"
+                    :props="props" size="large" style="width: 90%; margin-left: 20px; margin-bottom: 10px;" clearable
+                    collapse-tags collapse-tags-tooltip>
+                </el-cascader>
+
+                <p
+                    style="text-align: left; font-size: 18px; margin-top: 20px;margin-bottom: 10px; margin-left: 20px; color: #333;">
+                    刷新频率：</p>
+                <el-select v-model="formData.refreshInterval" placeholder="选择刷新频率" size="large"
+                    style="width: 90%;  margin-left: 20px;margin-bottom: 10px;">
+                    <el-option v-for="item in refreshIntervalOptions" :key="item.value" :label="item.label"
+                        :value="item.value" />
+                </el-select>
+
+                <div style="text-align: center; margin-top: 20px;">
+                    <el-button type="primary" size="large" @click="startMonitoring">开始监测</el-button>
+                    <el-button type="primary" size="large" @click="stopMonitoring">停止监测</el-button>
+
+                </div>
+
+            </el-aside>
+            <el-main style="width: 80%; height: 100%;">
+                <div ref="chartRef" class="chart-container"></div>
+            </el-main>
+        </el-container>
+    </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getDataSetLists, getDataSetByName } from '@/api/DataSetApi'
 import * as echarts from 'echarts';
 
-const fileList = ref([]) // 存储数据集文件列表
-const selectedFile = ref(null); // 存储选中的文件
+
+// 图表相关
 const chartRef = ref(null);
 let chartInstance = null;
-const tableDataset = ref([]);
+const wellLogData = ref([]);
+let intervalId = null;
 
-const handleFileClick = async (file) => {
-  selectedFile.value = file; // 设置选中的文件
-  try {
-    const dataSetInfo = {
-      tableName: file.name,
-    }
-    var res = await getDataSetByName(dataSetInfo)
-    if (res.status === "failed") {
-      ElMessageBox({
-        type: 'warning',
-        message: '获取数据集失败！'
-      })
-    } else {
-      // 处理数据以适应折线图
-      const headers = res.data.headers;
-      const data = res.data.data;
-      const seriesData = headers.slice(1).map(header => {
-        const columnData = data.map(item => item[header]); // 提取当前列的数据
-        // 将无效数据转换为 0
-        return columnData.map(value => {
-          const num = parseFloat(value);
-          return !isNaN(num) ? num : 0; // 如果有效则返回数字，否则返回 0
-        });
-      });
-      // 找到 "Depth" 的索引并提取数据
-      const depthIndex = headers.slice(1).findIndex(header =>
-        ['Depth', 'TopDepth', 'BotDepth', 'Dep'].includes(header)
-      );  // 找到 "Depth" 的索引
-      const depthData = seriesData[depthIndex]; // 提取 "Depth" 数据
-
-      // 更新 tableDataset，将 "Depth" 放在第一列
-      tableDataset.value = [
-        ['DepthXSeries', ...depthData], // 将 "Depth" 列放在第一列
-        ...seriesData.map((series, index) => {
-          if (index !== depthIndex) { // 排除 "Depth" 列
-            return [headers[index + 1], ...series];
-          }
-        }).filter(Boolean) // 过滤掉 undefined
-      ].filter(row => !['Depth', 'TopDepth', 'BotDepth', 'Dep'].includes(row[0])); // 过滤掉指定列
-    }
-  } catch (error) {
-    ElMessage({
-      type: 'error',
-      message: '图标展示失败！'
-    })
-  }
-}
-
-const initChart = () => {
-  if (!chartRef.value) return;
-  chartInstance = echarts.init(chartRef.value);
-  // updateChart();
+const props = {
+    multiple: true,  // 允许多选
+    // checkStrictly: true, // 只允许选择叶子节点，不选父级
 };
 
-const updateChart = () => {
-  if (!chartInstance) return;
-
-  // 动态生成 series 数组
-  const seriesCount = tableDataset.value.length - 1; // 减去第一行
-  const series = Array.from({ length: seriesCount }, (_, index) => ({
-    name: tableDataset.value[index + 1][0], // 确保名称与 legendData 一致
-    type: 'line',
-    smooth: true,
-    seriesLayoutBy: 'row',
-    emphasis: { focus: 'series' }
-  }));
-
-  // 动态生成 legend 的数据
-  const legendData = tableDataset.value.slice(1).map(row => row[0]); // 获取第一列作为 legend
-
-  const option = {
-    legend: {
-      bottom: 0,
-      data: legendData // 使用动态生成的 legend 数据
-    },
-    tooltip: { trigger: 'axis' },
-    dataset: { source: tableDataset.value },
-    xAxis: {
-      type: "category",
-      name: "深度",
-      min: 0,
-      axisLine: { // 添加轴线设置
-        show: false, // 显示轴线
-        lineStyle: {
-          type: 'dashed',
-          color: '#000', // 轴线颜色
-          width: 2 // 轴线宽度
-        }
-      }
-    },
-    yAxis: {
-      type: "value"
-    },
-    grid: { top: '10%', bottom: '20%' },
-    series: series
-  };
-  chartInstance.setOption(option, true);
-};
-
-watch(tableDataset, updateChart, { deep: true });
-
-onMounted(async () => {
-  try {
-    const res = await getDataSetLists();
-    if (res.status === "success") {
-      res.data.forEach(tableName => {
-        fileList.value.push({ name: tableName })
-      })
-      // 初始化图表
-      initChart();
-      window.addEventListener("resize", () => chartInstance?.resize());
-    } else {
-      ElMessage({
-        type: 'warning',
-        message: '数据集信息获取失败！'
-      });
-    }
-  } catch (error) {
-    console.error('获取数据集列表失败:', error);
-    ElMessage({
-      type: 'error',
-      message: '获取数据集列表失败'
-    });
-  }
+const formData = reactive({
+    dataLocationsValue: '',
+    wellName: '',
+    refreshInterval: '',
+    dataUtilValue: []
 })
 
+const dataLocationsOptions = [
+    { label: '大庆油田区块A', value: 'LocationA' },
+    { label: '大庆油田区块B', value: 'LocationB' }
+]
+
+const wellList = ref([
+    { label: '井001', value: 'Well001' },
+    { label: '井002', value: 'Well002' },
+    { label: '井003', value: 'Well003' }
+])
+
+const refreshIntervalOptions = ref([
+    { label: '3秒', value: '3' },
+    { label: '5秒', value: '5' },
+    { label: '10秒', value: '10' },
+    { label: '30秒', value: '30' },
+    { label: '1分钟', value: '60' },
+    { label: '10分钟', value: '600' }
+])
+
+const cascaderOptions = ref([
+    {
+        value: 'RES',
+        label: '电阻率 (RES)',
+        children: [
+            { label: 'GOLD DUK-2A Groundwater Survey Equipment', value: 'DUK_2A' },
+            { label: '斯伦贝谢第三代 MicroScope &MicroScope HD', value: 'MicroScope', disabled: true },
+            { label: '哈里伯顿 AFR', value: 'MicroScope', disabled: true },
+            { label: '贝克休斯 StarTrak ', value: 'MicroScope', disabled: true },
+        ],
+    },
+    {
+        value: 'GR',
+        label: '自然伽马 (GR)',
+        children: [
+            { label: '斯伦贝谢 伽马成像测井仪 IPZIG', value: 'IPZIG' },
+            { label: '贝克休斯 ZoneTrak G', value: 'ZoneTrak', disabled: true },
+            { label: '哈里伯顿 AGR', value: 'AGR', disabled: true },
+        ],
+    },
+    {
+        value: 'AC',
+        label: '声波时差 (AC)',
+        children: [
+            { label: '补偿测井仪(BHC)', value: 'BHC' },
+            { label: '长源距声波测井仪(LSS)', value: 'LSS', disabled: true },
+        ],
+    },
+    {
+        value: 'CAL',
+        label: '井径 (CAL)',
+        children: [
+            { label: '过油管2臂井径仪', value: 'g2' },
+            { label: '8臂井径仪', value: '8B', disabled: true },
+            { label: 'X－Y井径仪', value: 'XYB', disabled: true },
+            { label: '10臂井径仪', value: '10B', disabled: true },
+            { label: '12臂井径仪', value: '12B', disabled: true },
+            { label: '16臂井径仪', value: '16B', disabled: true },
+            { label: '2传感器40臂井径仪', value: '2C40B', disabled: true },
+            { label: '6传感器36(60)臂井径仪', value: '6C36B', disabled: true },
+            { label: '40传感器40独立臂井径仪', value: '40C40B', disabled: true },
+        ],
+    },
+])
+
+// 启动按钮
+const startMonitoring = () => {
+    console.log(formData)
+    if (formData.dataLocationsValue === "" || formData.dataUtilValue.length === 0 || formData.refreshInterval === "" || formData.wellName === "") {
+        ElMessage.warning('请填写完整的监测信息')
+        return
+    }
+    updateChart()
+}
+
+// 停止按钮
+const stopMonitoring = () => {
+    if (chartInstance) {
+        chartInstance.dispose();
+        chartInstance = null;
+        wellLogData.value = [];
+        clearInterval(intervalId);
+    }
+}
+
+function randomData(logName) {
+    let value;
+    if (logName === "RES") {
+        value = Math.random() * 100;
+    } else if (logName === "GR") {
+        value = Math.random() * (170 - 50) + 50;
+    } else if (logName === "AC") {
+        value = Math.random() * (130 - 50) + 50;
+    } else if (logName === "CAL") {
+        value = Math.random() * (20 - 8) + 8;
+    }
+
+    let now = new Date(Date.now());
+    return {
+        name: now.toString(),
+        value: [
+            [
+                now.getFullYear(),
+                now.getMonth() + 1,
+                now.getDate()
+            ].join("/") + " " + // 日期部分
+            [
+                now.getHours(),
+                now.getMinutes(),
+                now.getSeconds()
+            ].join(":"), // 时间部分
+            Math.round(value),
+        ],
+    };
+}
+
+// 更新 ECharts 图表
+const updateChart = () => {
+    if (!chartRef.value) return;
+    chartInstance = echarts.init(chartRef.value);
+
+    // 动态生成 series 数组
+    const seriesCount = formData.dataUtilValue.length;
+    const series = Array.from({ length: seriesCount }, (_, index) => ({
+        name: formData.dataUtilValue.at(index)[0],
+        seriesLayoutBy: 'row',
+        emphasis: { focus: 'series' },
+        type: 'line',
+        showSymbol: false,
+        data: [],
+    }));
+
+    const option = {
+        title: {
+            text: "测井曲线数据实时监测",
+            left: 'center', // 将标题居中
+            textStyle: {
+                fontSize: 20, // 设置字体大小，例如 20px
+                fontWeight: 'bold', // 可选：设置字体加粗
+                color: '#333', // 可选：设置字体颜色
+            },
+        },
+        tooltip: { trigger: 'axis' },
+        legend: {
+            data: series.map(s => s.name),
+            orient: 'horizontal',
+            left: 'center',
+            top: 'bottom',
+        },
+        xAxis: {
+            type: "time",
+            splitLine: { show: false },
+        },
+        yAxis: {
+            type: "value",
+            boundaryGap: [0, "100%"],
+            splitLine: { show: false },
+        },
+        series: series,
+    };
+
+    chartInstance.setOption(option);
+
+    intervalId = setInterval(() => {
+        if (wellLogData.value.length > 5000) {
+            wellLogData.value.shift();
+        }
+        series.forEach((s, index) => {
+            if (s.name === "RES") {
+                s.data.push(randomData("RES"));
+            } else if (s.name === "GR") {
+                s.data.push(randomData("GR"));
+            } else if (s.name === "AC") {
+                s.data.push(randomData("AC"));
+            } else if (s.name === "CAL") {
+                s.data.push(randomData("CAL"));
+            }
+        })
+        chartInstance.setOption({
+            series: series,
+        });
+    }, formData.refreshInterval * 1000);
+}
+
+// 在组件挂载时初始化图表
+onMounted(() => {
+    // initChart();
+});
+
+// 组件卸载时销毁 ECharts 实例，防止内存泄漏
 onBeforeUnmount(() => {
-  // 卸载图表
-  window.removeEventListener("resize", () => chartInstance?.resize());
-  chartInstance?.dispose();
+    if (chartInstance) {
+        chartInstance.dispose();
+        chartInstance = null;
+    }
 });
 
 </script>
 
 <style scoped>
 .common-layout {
-  height: 100vh;
-  width: 100vw;
-  padding: 0;
-  margin: 0;
-  position: fixed;
-  top: 0;
-  left: 0;
+    height: 100vh;
+    width: 100vw;
+    padding: 0;
+    margin: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
 }
 
-.file-list-scrollbar {
-  height: 80vh;
-  margin-top: 10px;
-}
 
-.scrollbar-item {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 50px;
-  margin: 10px;
-  text-align: center;
-  border-radius: 4px;
-  background: var(--el-color-primary-light-9);
-  color: var(--el-color-primary);
-  user-select: none;
-}
-
-.scrollbar-item-selected {
-  background-color: var(--el-color-primary-light-5);
-  /* 设置选中时的背景色 */
-}
 
 .chart-container {
-  width: 100%;
-  height: 500px;
+    width: 100%;
+    height: 500px;
 }
 </style>

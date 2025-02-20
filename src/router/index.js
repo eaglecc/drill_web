@@ -15,8 +15,14 @@ const router = createRouter({
       component: () => import('../views/WellLogPredicate.vue'),
     },
     {
-      path: '/',
+      path: '/showWellLog',
       name: 'showWellLog',
+      component: () => import('../views/WellLogShow.vue'),
+    },
+    ,
+    {
+      path: '/',
+      name: 'watchWellLog',
       component: () => import('../views/WellLogWatch.vue'),
     },
   ],
