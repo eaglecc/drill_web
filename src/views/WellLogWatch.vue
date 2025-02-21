@@ -110,6 +110,7 @@ const cascaderOptions = ref([
         value: 'GR',
         label: '自然伽马 (GR)',
         children: [
+            { label: 'Gold Geophysical logging tool', value: 'gold_GR', disabled: true },
             { label: '斯伦贝谢 伽马成像测井仪 IPZIG', value: 'IPZIG' },
             { label: '贝克休斯 ZoneTrak G', value: 'ZoneTrak', disabled: true },
             { label: '哈里伯顿 AGR', value: 'AGR', disabled: true },
@@ -138,11 +139,39 @@ const cascaderOptions = ref([
             { label: '40传感器40独立臂井径仪', value: '40C40B', disabled: true },
         ],
     },
+    {
+        value: 'SP',
+        label: '自然电位 (SP)',
+        children: [
+            { label: 'Gold Geophysical logging tool', value: 'gold_sp' },
+            { label: 'Gold Borehole Logging', value: 'gold_sp2', disabled: true },
+        ],
+    },
+    {
+        value: 'BHC',
+        label: '补偿声波 (BHC)',
+        children: [
+            { label: 'BHC-900', value: 'BHC_900' },
+        ],
+    },
+    {
+        value: 'HAC',
+        label: '声波时差 (HAC)',
+        children: [
+            { label: 'Acoustic Transit Time Tool HAC-600', value: 'HAC-600' },
+        ],
+    },
+    {
+        value: 'DEN',
+        label: '密度 (DEN)',
+        children: [
+            { label: 'Schlumberger Digital Density Log Tool DD-700', value: 'DD-700' },
+        ],
+    },
 ])
 
 // 启动按钮
 const startMonitoring = () => {
-    console.log(formData)
     if (formData.dataLocationsValue === "" || formData.dataUtilValue.length === 0 || formData.refreshInterval === "" || formData.wellName === "") {
         ElMessage.warning('请填写完整的监测信息')
         return
@@ -170,6 +199,14 @@ function randomData(logName) {
         value = Math.random() * (130 - 50) + 50;
     } else if (logName === "CAL") {
         value = Math.random() * (20 - 8) + 8;
+    } else if (logName === "SP") {
+        value = Math.random() * (1000 - (-1000)) + (-1000);
+    } else if (logName === "BHC") {
+        value = Math.random() * (200 - 50) + 50;
+    } else if (logName === "HAC") {
+        value = Math.random() * (200 - 50) + 50;
+    } else if (logName === "DEN") {
+        value = Math.random() * (2.8 - 1.5) + 1.5;
     }
 
     let now = new Date(Date.now());
@@ -251,6 +288,14 @@ const updateChart = () => {
                 s.data.push(randomData("AC"));
             } else if (s.name === "CAL") {
                 s.data.push(randomData("CAL"));
+            } else if (s.name === "SP") {
+                s.data.push(randomData("SP"));
+            } else if (s.name === "BHC") {
+                s.data.push(randomData("BHC"));
+            } else if (s.name === "HAC") {
+                s.data.push(randomData("HAC"));
+            } else if (s.name === "DEN") {
+                s.data.push(randomData("DEN"));
             }
         })
         chartInstance.setOption({
