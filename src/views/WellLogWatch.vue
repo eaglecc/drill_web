@@ -3,7 +3,7 @@
         <el-container>
             <el-aside style="width: 20%; height: 100%;">
                 <p
-                    style="text-align: left; font-size: 18px; margin-top: 40px;margin-bottom: 10px; margin-left: 20px; color: #333;">
+                    style="text-align: left; font-size: 18px; margin-top: 40px;margin-bottom: 10px; margin-left: 20px;color: white;">
                     监测地点选择：</p>
                 <el-select v-model="formData.dataLocationsValue" placeholder="选择监测地点" size="large"
                     style="width: 90%;  margin-left: 20px;margin-bottom: 10px;">
@@ -12,7 +12,7 @@
                 </el-select>
 
                 <p
-                    style="text-align: left; font-size: 18px; margin-top: 20px;margin-bottom: 10px; margin-left: 20px; color: #333;">
+                    style="text-align: left; font-size: 18px; margin-top: 20px;margin-bottom: 10px; margin-left: 20px;color: white;">
                     井孔选择：</p>
                 <el-select v-model="formData.wellName" placeholder="选择井孔" size="large"
                     style="width: 90%;  margin-left: 20px;margin-bottom: 10px;">
@@ -20,7 +20,7 @@
                 </el-select>
 
                 <p
-                    style="text-align: left; font-size: 18px; margin-top: 20px;margin-bottom: 10px; margin-left: 20px; color: #333;">
+                    style="text-align: left; font-size: 18px; margin-top: 20px;margin-bottom: 10px; margin-left: 20px;color: white;">
                     测井类型/测井工具：</p>
                 <el-cascader v-model="formData.dataUtilValue" :options="cascaderOptions" placeholder="选择测井类型和工具"
                     :props="props" size="large" style="width: 90%; margin-left: 20px; margin-bottom: 10px;" clearable
@@ -28,7 +28,7 @@
                 </el-cascader>
 
                 <p
-                    style="text-align: left; font-size: 18px; margin-top: 20px;margin-bottom: 10px; margin-left: 20px; color: #333;">
+                    style="text-align: left; font-size: 18px; margin-top: 20px;margin-bottom: 10px; margin-left: 20px;color: white;">
                     刷新频率：</p>
                 <el-select v-model="formData.refreshInterval" placeholder="选择刷新频率" size="large"
                     style="width: 90%;  margin-left: 20px;margin-bottom: 10px;">
@@ -236,7 +236,7 @@ const updateChart = () => {
     // 动态生成 series 数组
     const seriesCount = formData.dataUtilValue.length;
     const series = Array.from({ length: seriesCount }, (_, index) => ({
-        name: formData.dataUtilValue.at(index)[0],
+        name: formData.dataUtilValue[index][0],
         seriesLayoutBy: 'row',
         emphasis: { focus: 'series' },
         type: 'line',
@@ -251,7 +251,7 @@ const updateChart = () => {
             textStyle: {
                 fontSize: 20, // 设置字体大小，例如 20px
                 fontWeight: 'bold', // 可选：设置字体加粗
-                color: '#333', // 可选：设置字体颜色
+                color: '#fff', // 可选：设置字体颜色
             },
         },
         tooltip: { trigger: 'axis' },
@@ -260,15 +260,24 @@ const updateChart = () => {
             orient: 'horizontal',
             left: 'center',
             top: 'bottom',
+            textStyle: {  // 添加文字样式
+                color: '#fff',  // 设置图例文字颜色为白色
+            },
         },
         xAxis: {
             type: "time",
             splitLine: { show: false },
+            axisLabel: {  // 添加坐标轴标签样式
+                color: '#fff',  // 设置坐标轴标签颜色为白色
+            },
         },
         yAxis: {
             type: "value",
             boundaryGap: [0, "100%"],
             splitLine: { show: false },
+            axisLabel: {  // 添加坐标轴标签样式
+                color: '#fff',  // 设置坐标轴标签颜色为白色
+            },
         },
         series: series,
     };
@@ -328,6 +337,7 @@ onBeforeUnmount(() => {
     position: fixed;
     top: 0;
     left: 0;
+    background-color: rgb(16, 40, 126);
 }
 
 
