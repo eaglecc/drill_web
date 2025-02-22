@@ -3,26 +3,21 @@
         <div class="steps-container">
             <el-steps :active="activeStep" align-center>
                 <el-step title="Step 1" description="选择测井曲线数据集"></el-step>
-                <el-step title="Step 2" description="选择输入测井曲线"></el-step>
-                <el-step title="Step 3" description="选择输出测井曲线（单条）"></el-step>
-                <el-step title="Step 4" description="选择任务"></el-step>
-                <el-step title="Step 5" description="确认提交"></el-step>
+                <el-step title="Step 2" description="选择任务"></el-step>
+                <el-step title="Step 3" description="选择模型"></el-step>
+                <el-step title="Step 4" description="选择输入测井曲线"></el-step>
+                <el-step title="Step 5" description="选择输出测井曲线（单条）"></el-step>
+                <el-step title="Step 6" description="确认提交"></el-step>
             </el-steps>
 
             <div class="step-content">
                 <div v-if="activeStep === 0">
-                    <el-transfer v-model="selectedDatasets" :data="datasets" filterable :titles="['可选测井数据集', '已选测井数据集']"
-                        :button-texts="['移除', '选择']" />
+                    <p style="text-align: center;font-size: 20px; color: #333; margin-bottom: 30px;">请选择测井数据集</p>
+                    <el-select v-model="selectedDatasets" placeholder="请选择数据集" size="large">
+                        <el-option v-for="item in datasets" :key="item.value" :label="item.label" :value="item.value" />
+                    </el-select>
                 </div>
-                <div v-if="activeStep === 1">
-                    <el-transfer v-model="inputWellLogKinds" :data="wellLogKinds" filterable
-                        :titles="['可选测井曲线种类', '已选测井曲线种类']" :button-texts="['移除', '选择']" />
-                </div>
-                <div v-if="activeStep === 2">
-                    <el-transfer v-model="outputWellLogKinds" :data="wellLogKinds" filterable
-                        :titles="['可选测井曲线种类', '已选测井曲线种类']" :button-texts="['移除', '选择']" />
-                </div>
-                <div v-if="activeStep === 3">
+                <div v-if="activeStep === 1" class="taskdiv">
                     <el-radio-group v-model="selectedTask" class="task-selection">
                         <el-radio-button v-for="task in tasks" :key="task.value" :label="task.value">
                             <div class="task-card" :class="{ 'is-selected': selectedTask === task.value }">
@@ -39,7 +34,32 @@
                         </el-radio-button>
                     </el-radio-group>
                 </div>
-                <div v-if="activeStep === 4"
+                <div v-if="activeStep === 2">
+                    <div v-if="selectedTask === 'prediction'">
+                        <PredModelSelect/>
+
+                    </div>
+                    <div v-else-if="selectedTask === 'completion'">
+                        <PredModelSelect/>
+                    </div>
+                    <div v-else-if="selectedTask === 'correction'">
+                        <PredModelSelect/>
+                    </div>
+                    <div v-else-if="selectedTask === 'recognize'">
+                        <RecognitionModelSelectComponent/>
+                    </div>
+
+                </div>
+                <div v-if="activeStep === 3">
+                    <el-transfer v-model="inputWellLogKinds" :data="wellLogKinds" filterable
+                        :titles="['可选测井曲线种类', '已选测井曲线种类']" :button-texts="['移除', '选择']" />
+                </div>
+                <div v-if="activeStep === 4">
+                    <el-transfer v-model="outputWellLogKinds" :data="wellLogKinds" filterable
+                        :titles="['可选测井曲线种类', '已选测井曲线种类']" :button-texts="['移除', '选择']" />
+                </div>
+
+                <div v-if="activeStep === 5"
                     style="display: flex; align-items: center; justify-content: center; width: 100%;">
                     <el-form label-width="auto" label-position="left" style="width: 60%;">
                         <el-form-item label="已选择的数据集:" label-position="left">
@@ -74,17 +94,19 @@
 <script setup>
 import { ref } from "vue";
 import { ElMessage } from 'element-plus'
-import { DataLine, TrendCharts, DataAnalysis } from '@element-plus/icons-vue'  // 添加这行导入语句
+import { DataLine, TrendCharts, DataAnalysis, HelpFilled } from '@element-plus/icons-vue'  // 添加这行导入语句
+import PredModelSelect from '@/components/PredModelSelectComponent.vue'
+import RecognitionModelSelectComponent from "@/components/RecognitionModelSelectComponent.vue";
 
 const activeStep = ref(0);
 // 数据集选择穿梭框所需的数据
 const datasets = ref([
-    { key: 1, label: '数据集1' },
-    { key: 2, label: '数据集2' },
-    { key: 3, label: '数据集3' },
-    { key: 4, label: '数据集4' }
+    { value: '数据集1', label: '数据集1' },
+    { value: '数据集2', label: '数据集2' },
+    { value: '数据集3', label: '数据集3' },
+    { value: '数据集4', label: '数据集4' }
 ]);
-const selectedDatasets = ref([]);
+const selectedDatasets = ref('');
 
 // 测井曲线种类穿梭框数据
 const wellLogKinds = ref([
@@ -116,28 +138,28 @@ const tasks = ref([
         label: '井径矫正',
         icon: DataAnalysis,
         description: '对测井曲线进行井径校正优化'
+    },
+    {
+        value: 'recognize',
+        label: '岩性识别',
+        icon: HelpFilled,
+        description: '利用测井曲线及智能算法进行岩性识别'
     }
 ]);
 
 const nextStep = () => {
+    console.log("selectedTask....", selectedTask.value)
     if (activeStep.value < 4) {
-        if ((activeStep.value === 0 && selectedDatasets.value.length <= 0) ||
-            (activeStep.value === 1 && inputWellLogKinds.value.length <= 0) ||
-            (activeStep.value === 2 && outputWellLogKinds.value.length <= 0) ||
-            (activeStep.value === 3 && selectedTask.value === '')) {
-            ElMessage({
-                message: '数据不能为空，请重新选择！',
-                type: 'error',
-            })
-            return
-        }
-        if (selectedDatasets.value.length > 1) {
-            ElMessage({
-                message: '仅支持选择一个数据集，请重新选择！',
-                type: 'error',
-            })
-            return
-        }
+        // if ((activeStep.value === 0 && selectedDatasets.value === '') ||
+        //     (activeStep.value === 1 && inputWellLogKinds.value.length <= 0) ||
+        //     (activeStep.value === 2 && outputWellLogKinds.value.length <= 0) ||
+        //     (activeStep.value === 3 && selectedTask.value === '')) {
+        //     ElMessage({
+        //         message: '数据不能为空，请重新选择！',
+        //         type: 'error',
+        //     })
+        //     return
+        // }
         if (outputWellLogKinds.value.length > 1) {
             ElMessage({
                 message: '模型目前仅支持输出单条测井曲线，请重新选择！',
@@ -151,10 +173,8 @@ const nextStep = () => {
 };
 
 const getDatasetLabels = (selectedKeys) => {
-    return datasets.value
-        .filter(dataset => selectedKeys.includes(dataset.key))
-        .map(dataset => dataset.label)
-        .join(', ');
+    const task = datasets.value.find(data => data.value === selectedKeys);
+    return task ? task.label : '';
 };
 
 const getWellLogLabel = (selectedKeys) => {
@@ -224,26 +244,32 @@ const prevStep = () => {
     margin-top: 20px;
 }
 
+.taskdiv {
+    display: grid;
+    place-items: center;
+    height: 100%;
+}
+
 .task-selection {
     display: flex;
     justify-content: center;
     gap: 20px;
     margin-top: 20px;
+    width: 80%;
 }
 
 .task-card {
+    margin-bottom: 20px;
     padding: 20px;
     text-align: center;
     width: 300px;
     transition: background-color 0.3s;
-    /* 添加过渡效果 */
 }
 
 .task-card.is-selected {
     /* 新增选中状态样式 */
     background-color: rgb(64, 158, 255);
     /* 选中时的背景色 */
-
 }
 
 .task-icon {
@@ -272,14 +298,7 @@ const prevStep = () => {
 :deep(.el-radio-button__inner) {
     padding: 0;
     height: auto;
-    border-radius: 8px !important;
-}
-
-:deep(.el-radio-button:first-child .el-radio-button__inner) {
-    border-radius: 8px !important;
-}
-
-:deep(.el-radio-button:last-child .el-radio-button__inner) {
+    border: 1px solid #ccc;
     border-radius: 8px !important;
 }
 </style>
