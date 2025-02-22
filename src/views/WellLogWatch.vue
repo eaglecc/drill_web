@@ -140,14 +140,6 @@ const cascaderOptions = ref([
         ],
     },
     {
-        value: 'SP',
-        label: '自然电位 (SP)',
-        children: [
-            { label: 'Gold Geophysical logging tool', value: 'gold_sp' },
-            { label: 'Gold Borehole Logging', value: 'gold_sp2', disabled: true },
-        ],
-    },
-    {
         value: 'BHC',
         label: '补偿声波 (BHC)',
         children: [
@@ -166,6 +158,14 @@ const cascaderOptions = ref([
         label: '密度 (DEN)',
         children: [
             { label: 'Schlumberger Digital Density Log Tool DD-700', value: 'DD-700' },
+        ],
+    },
+    {
+        value: 'SP',
+        label: '自然电位 (SP)',
+        children: [
+            { label: 'Gold Geophysical logging tool', value: 'gold_sp' },
+            { label: 'Gold Borehole Logging', value: 'gold_sp2', disabled: true },
         ],
     },
 ])
@@ -271,6 +271,7 @@ const updateChart = () => {
                 color: '#fff',  // 设置坐标轴标签颜色为白色
             },
         },
+
         yAxis: {
             type: "value",
             boundaryGap: [0, "100%"],
@@ -337,7 +338,8 @@ onBeforeUnmount(() => {
     position: fixed;
     top: 0;
     left: 0;
-    background-color: rgb(16, 40, 126);
+    /* background-color: rgb(16, 40, 126); */
+    background-image: url('../assets/framebackground.png');
 }
 
 

@@ -19,8 +19,9 @@
         </el-scrollbar>
       </el-aside>
 
-      <el-main class="main-wrapper" >
-        <el-table v-if="excelData.length" :data="excelData" border stripe :scrollbar-always-on="true">
+      <el-main class="main-wrapper">
+        <el-table v-if="excelData.length" :data="excelData" height=100% border stripe :scrollbar-always-on="true"
+          class="transparent-table">
           <el-table-column v-for="(header, index) in headers" :key="index" :prop="header" :label="header" />
         </el-table>
       </el-main>
@@ -172,30 +173,26 @@ const handleFileClick = async (file) => {
   position: fixed;
   top: 0;
   left: 0;
+  background-image: url('../assets/framebackground.png');
 }
 
 .container-wrapper {
   height: 100%;
   width: 100%;
+
 }
 
 .aside-wrapper {
   height: 100%;
   width: 20%;
   border-right: 1px solid #e6e6e6;
-  background-color: #fff;
+  /* background-color: #fff; */
 }
 
 .upload-container {
   display: flex;
   justify-content: center;
   padding: 20px 0;
-}
-
-.main-wrapper {
-  height: 100%;
-  padding: 10px;
-  background-color: #fff;
 }
 
 .excel-uploader {
@@ -219,6 +216,7 @@ const handleFileClick = async (file) => {
   padding: 8px 16px;
   cursor: pointer;
   transition: background-color 0.3s;
+  color: white;
 }
 
 .file-list li.active {
@@ -227,10 +225,41 @@ const handleFileClick = async (file) => {
 }
 
 .file-list li:hover {
-  background-color: #f5f7fa;
+  background-color: #5f6061;
 }
 
 .file-list li.active:hover {
   background-color: #409EFF;
 }
+
+
+.main-wrapper {
+  height: 100%;
+  padding: 10px;
+  /* background-color: #fff; */
+}
+
+/* .transparent-table {
+
+} */
+
+/* 让表格背景透明 */
+:deep(.el-table) {
+  background: transparent !important;
+}
+
+:deep(.el-table tr) {
+  background: transparent !important;
+}
+
+:deep(.el-table th) {
+  background: transparent !important;
+  color: white;
+}
+
+:deep(.el-table td) {
+  background: transparent !important;
+  color: white;
+}
+
 </style>

@@ -2,7 +2,7 @@
   <div class="common-layout">
     <el-container>
       <el-aside style="width: 19%; height: 100%;">
-        <h3 style="text-align: center; margin: 10px 0; color: #333;">测井数据集列表</h3> 
+        <h3 style="text-align: center; margin: 10px 0; color: #fff;">测井数据集列表</h3>
         <el-scrollbar class="file-list-scrollbar">
           <p v-for="(file, index) in fileList" :key="index" @click="handleFileClick(file)"
             :class="['scrollbar-item', { 'scrollbar-item-selected': selectedFile === file }]">
@@ -10,7 +10,8 @@
         </el-scrollbar>
       </el-aside>
       <el-main style="width: 80%; height: 100%;">
-        <h2 v-if="selectedFile" class="dataset-name"style="text-align: center;">测井数据集{{ selectedFile.name.replace(/^t_dataset_/, '') }}可视化面板</h2>
+        <h2 v-if="selectedFile" class="dataset-name" style="text-align: center; color: #fff;">测井数据集{{
+          selectedFile.name.replace(/^t_dataset_/, '') }}可视化面板</h2>
         <div ref="chartRef" class="chart-container"></div>
       </el-main>
     </el-container>
@@ -102,7 +103,10 @@ const updateChart = () => {
   const option = {
     legend: {
       bottom: 0,
-      data: legendData // 使用动态生成的 legend 数据
+      data: legendData, // 使用动态生成的 legend 数据
+      textStyle: {  // 添加文字样式
+        color: '#fff',  // 设置图例文字颜色为白色
+      },
     },
     tooltip: { trigger: 'axis' },
     dataset: { source: tableDataset.value },
@@ -114,13 +118,19 @@ const updateChart = () => {
         show: false, // 显示轴线
         lineStyle: {
           type: 'dashed',
-          color: '#000', // 轴线颜色
+          color: '#fff', // 轴线颜色
           width: 2 // 轴线宽度
         }
-      }
+      },
+      axisLabel: {  // 添加坐标轴标签样式
+        color: '#fff',  // 设置坐标轴标签颜色为白色
+      },
     },
     yAxis: {
-      type: "value"
+      type: "value",
+      axisLabel: {  // 添加坐标轴标签样式
+        color: '#fff',  // 设置坐标轴标签颜色为白色
+      },
     },
     grid: { top: '10%', bottom: '20%' },
     series: series
@@ -172,6 +182,7 @@ onBeforeUnmount(() => {
   position: fixed;
   top: 0;
   left: 0;
+  background-image: url('../assets/framebackground.png');
 }
 
 .file-list-scrollbar {
