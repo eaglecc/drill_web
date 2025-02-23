@@ -1,128 +1,170 @@
 <template>
-    <div class="steps-wrapper">
-        <div class="steps-container">
-            <el-steps :active="activeStep" align-center>
-                <el-step title="Step 1" description="选择任务"></el-step>
-                <el-step title="Step 2" description="选择测井曲线数据集"></el-step>
-                <el-step title="Step 3" description="选择模型"></el-step>
-                <el-step title="Step 4" description="选择输入测井曲线"></el-step>
-                <el-step
-                    v-if="selectedTask === 'prediction' || selectedTask === 'completion' || selectedTask === 'correction'"
-                    title="Step 5" :description="getDescription()"></el-step>
-                <el-step :title="getTitle()" description="确认提交"></el-step>
-            </el-steps>
+    <div class="container">
+        <!-- 主界面Step组件 -->
+        <div class="steps-wrapper">
+            <div class="steps-container">
+                <el-steps :active="activeStep" align-center>
+                    <el-step title="Step 1" description="选择任务"></el-step>
+                    <el-step title="Step 2" description="选择测井曲线数据集"></el-step>
+                    <el-step title="Step 3" description="选择模型"></el-step>
+                    <el-step title="Step 4" description="选择输入测井曲线"></el-step>
+                    <el-step
+                        v-if="selectedTask === 'prediction' || selectedTask === 'completion' || selectedTask === 'correction'"
+                        title="Step 5" :description="getDescription()"></el-step>
+                    <el-step :title="getTitle()" description="确认提交"></el-step>
+                </el-steps>
 
-            <div class="step-content">
+                <div class="step-content">
 
-                <div v-if="activeStep === 0" class="taskdiv">
-                    <el-radio-group v-model="selectedTask" class="task-selection">
-                        <el-radio-button v-for="task in tasks" :key="task.value" :label="task.value">
-                            <div class="task-card" :class="{ 'is-selected': selectedTask === task.value }">
-                                <!-- 添加条件类 -->
-                                <el-icon size="24px" class="task-icon"
-                                    :class="{ 'is-selected-icon': selectedTask === task.value }">
-                                    <component :is="task.icon"></component>
-                                </el-icon>
-                                <h3>{{ task.label }}</h3>
-                                <p class="task-description"
-                                    :class="{ 'is-selected-description': selectedTask === task.value }">{{
-                                        task.description }}</p>
-                            </div>
-                        </el-radio-button>
-                    </el-radio-group>
-                </div>
-                <div v-if="activeStep === 1">
-                    <p style="text-align: center;font-size: 20px; color: #fff; margin-bottom: 30px;">请选择测井数据集</p>
-                    <el-select v-model="selectedDatasets" placeholder="请选择数据集" size="large">
-                        <el-option v-for="item in datasets" :key="item.value" :label="item.label" :value="item.value" />
-                    </el-select>
-                </div>
-                <div v-if="activeStep === 2">
-                    <div v-if="selectedTask === 'prediction'">
-                        <PredModelSelect @update-message="updatePredictModel" />
+                    <div v-if="activeStep === 0" class="taskdiv">
+                        <el-radio-group v-model="selectedTask" class="task-selection">
+                            <el-radio-button v-for="task in tasks" :key="task.value" :label="task.value">
+                                <div class="task-card" :class="{ 'is-selected': selectedTask === task.value }">
+                                    <!-- 添加条件类 -->
+                                    <el-icon size="24px" class="task-icon"
+                                        :class="{ 'is-selected-icon': selectedTask === task.value }">
+                                        <component :is="task.icon"></component>
+                                    </el-icon>
+                                    <h3>{{ task.label }}</h3>
+                                    <p class="task-description"
+                                        :class="{ 'is-selected-description': selectedTask === task.value }">{{
+                                            task.description }}</p>
+                                </div>
+                            </el-radio-button>
+                        </el-radio-group>
                     </div>
-                    <div v-else-if="selectedTask === 'completion'">
-                        <PredModelSelect @update-message="updatePredictModel" />
+                    <div v-if="activeStep === 1">
+                        <p style="text-align: center;font-size: 20px; color: #fff; margin-bottom: 30px;">请选择测井数据集</p>
+                        <el-select v-model="selectedDatasets" placeholder="请选择数据集" size="large">
+                            <el-option v-for="item in datasets" :key="item.value" :label="item.label"
+                                :value="item.value" />
+                        </el-select>
                     </div>
-                    <div v-else-if="selectedTask === 'correction'">
-                        <PredModelSelect @update-message="updatePredictModel" />
+                    <div v-if="activeStep === 2">
+                        <div v-if="selectedTask === 'prediction'">
+                            <PredModelSelect @update-message="updatePredictModel" />
+                        </div>
+                        <div v-else-if="selectedTask === 'completion'">
+                            <PredModelSelect @update-message="updatePredictModel" />
+                        </div>
+                        <div v-else-if="selectedTask === 'correction'">
+                            <PredModelSelect @update-message="updatePredictModel" />
+                        </div>
+                        <div v-else-if="selectedTask === 'recognize'">
+                            <RecognitionModelSelectComponent @update-message="updatePredictModel" />
+                        </div>
+
                     </div>
-                    <div v-else-if="selectedTask === 'recognize'">
-                        <RecognitionModelSelectComponent @update-message="updatePredictModel" />
+                    <div v-if="activeStep === 3">
+                        <el-transfer v-model="inputWellLogKinds" :data="wellLogKinds" filterable
+                            :titles="['可选测井曲线种类', '已选测井曲线种类']" :button-texts="['移除', '选择']" />
+                    </div>
+                    <div
+                        v-if="activeStep === 4 && (selectedTask === 'prediction' || selectedTask === 'completion' || selectedTask === 'correction')">
+                        <el-transfer v-model="outputWellLogKinds" :data="wellLogKinds" filterable
+                            :titles="['可选测井曲线种类', '已选测井曲线种类']" :button-texts="['移除', '选择']" />
                     </div>
 
-                </div>
-                <div v-if="activeStep === 3">
-                    <el-transfer v-model="inputWellLogKinds" :data="wellLogKinds" filterable
-                        :titles="['可选测井曲线种类', '已选测井曲线种类']" :button-texts="['移除', '选择']" />
-                </div>
-                <div
-                    v-if="activeStep === 4 && (selectedTask === 'prediction' || selectedTask === 'completion' || selectedTask === 'correction')">
-                    <el-transfer v-model="outputWellLogKinds" :data="wellLogKinds" filterable
-                        :titles="['可选测井曲线种类', '已选测井曲线种类']" :button-texts="['移除', '选择']" />
+                    <div v-if="((activeStep === 5 && (selectedTask === 'prediction' || selectedTask === 'completion' || selectedTask === 'correction'))
+                        || (activeStep === 4 && selectedTask === 'recognize'))"
+                        style="display: flex; align-items: center; justify-content: center; width: 100%;">
+                        <el-form label-width="auto" label-position="left" style="width: 60%; ">
+                            <el-form-item label="选择的任务:" label-position="left">
+                                <el-input :value="getTaskLabel(selectedTask)" readonly />
+                            </el-form-item>
+                            <el-form-item label="已选择的数据集:" label-position="left">
+                                <el-input :value="getDatasetLabels(selectedDatasets)" readonly />
+                            </el-form-item>
+                            <el-form-item label="选择的模型:" label-position="left">
+                                <el-input :value="selectedModel" readonly />
+                            </el-form-item>
+                            <el-form-item label="输入测井曲线:" label-position="left">
+                                <el-input :value="getWellLogLabel(inputWellLogKinds)" readonly />
+                            </el-form-item>
+                            <el-form-item
+                                v-if="selectedTask === 'prediction' || selectedTask === 'completion' || selectedTask === 'correction'"
+                                label="输出测井曲线:" label-position="left">
+                                <el-input :value="getWellLogLabel(outputWellLogKinds)" readonly />
+                            </el-form-item>
+
+                        </el-form>
+                    </div>
                 </div>
 
-                <div v-if="((activeStep === 5 && (selectedTask === 'prediction' || selectedTask === 'completion' || selectedTask === 'correction'))
-                    || (activeStep === 4 && selectedTask === 'recognize'))"
-                    style="display: flex; align-items: center; justify-content: center; width: 100%;">
-                    <el-form label-width="auto" label-position="left" style="width: 60%; ">
-                        <el-form-item label="已选择的数据集:" label-position="left">
-                            <el-input :value="getDatasetLabels(selectedDatasets)" readonly />
-                        </el-form-item>
-                        <el-form-item label="选择的任务:" label-position="left">
-                            <el-input :value="getTaskLabel(selectedTask)" readonly />
-                        </el-form-item>
-                        <el-form-item label="选择的模型:" label-position="left">
-                            <el-input :value="selectedModel" readonly />
-                        </el-form-item>
-                        <el-form-item label="输入测井曲线:" label-position="left">
-                            <el-input :value="getWellLogLabel(inputWellLogKinds)" readonly />
-                        </el-form-item>
-                        <el-form-item
-                            v-if="selectedTask === 'prediction' || selectedTask === 'completion' || selectedTask === 'correction'"
-                            label="输出测井曲线:" label-position="left">
-                            <el-input :value="getWellLogLabel(outputWellLogKinds)" readonly />
-                        </el-form-item>
-
-                    </el-form>
+                <div class="step-actions">
+                    <el-button @click="prevStep" :disabled="activeStep === 0">上一步</el-button>
+                    <el-button type="primary" @click="nextStep"
+                        v-if="(activeStep != 4 || (activeStep === 4 && selectedTask != 'recognize'))">下一步</el-button>
+                    <el-button type="primary" @click="confirm"
+                        v-if="(activeStep === 5 || (activeStep === 4 && selectedTask === 'recognize'))">提交</el-button>
                 </div>
-            </div>
-
-            <div class="step-actions">
-                <el-button @click="prevStep" :disabled="activeStep === 0">上一步</el-button>
-                <el-button type="primary" @click="nextStep"
-                    v-if="(activeStep != 4 || (activeStep === 4 && selectedTask != 'recognize'))">下一步</el-button>
-                <el-button type="primary" @click="confirm"
-                    v-if="(activeStep === 5 || (activeStep === 4 && selectedTask === 'recognize'))">提交</el-button>
             </div>
         </div>
+
+        <!-- 抽屉按钮组件 -->
+        <el-button class="open-drawer-button" type="success" @click="openDrawer()">打开任务列表</el-button>
+
+        <!-- el-drawer 组件 -->
+        <el-drawer title="任务列表" v-model="drawerVisible" size="30%" @close="drawerVisible = false">
+            <el-scrollbar style="height: 100%;">
+                <ul class="task-list">
+                    <li v-for="task in tasksLists" :key="task.id" class="task-item">
+                        <div class="task-details">
+                            <span class="task-time">{{ task.createdAt }}</span>
+                            <span class="task-type">{{ task.type }}</span>
+                            <span class="task-status"
+                                :class="{ 'completed': task.status === '已完成', 'in-progress': task.status === '进行中', 'no-start': task.status === '未开始' }">
+                                <template v-if="task.status === '已完成'">
+                                    {{ task.status }}
+                                </template>
+                                <template v-if="task.status === '未开始'">
+                                    {{ task.status }}
+                                </template>
+                                <template v-if="task.status === '进行中'">
+                                    <el-progress type="circle" :percentage="percentage" :color="colors"
+                                        :stroke-width="5" :width="60" />
+                                </template>
+                            </span>
+                        </div>
+                    </li>
+                </ul>
+            </el-scrollbar>
+        </el-drawer>
     </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { ElMessage } from 'element-plus'
 import { DataLine, TrendCharts, DataAnalysis, HelpFilled } from '@element-plus/icons-vue'  // 添加这行导入语句
+import { addNewTask, getDataSetLists, getTaskLists } from '@/api/DataSetApi'
 import PredModelSelect from '@/components/PredModelSelectComponent.vue'
 import RecognitionModelSelectComponent from "@/components/RecognitionModelSelectComponent.vue";
 
 const activeStep = ref(0);
-// 数据集选择穿梭框所需的数据
-const datasets = ref([
-    { value: '数据集1', label: '数据集1' },
-    { value: '数据集2', label: '数据集2' },
-    { value: '数据集3', label: '数据集3' },
-    { value: '数据集4', label: '数据集4' }
-]);
+// 数据集选择穿梭框所需的数据j
+const datasets = ref([]);
 const selectedDatasets = ref('');
 
 // 测井曲线种类穿梭框数据
 const wellLogKinds = ref([
-    { key: 1, label: 'GR' },
-    { key: 2, label: 'DEN' },
-    { key: 3, label: 'CAL' },
-    { key: 4, label: 'HAC' }
+    { key: 1, label: 'CAL' },
+    { key: 2, label: 'GR' },
+    { key: 3, label: 'SP' },
+    { key: 4, label: 'LLD' },
+    { key: 5, label: 'LLS' },
+    { key: 6, label: 'AC' },
+    { key: 7, label: 'DEN' },
+    { key: 8, label: 'PEF' },
+    { key: 9, label: 'Lith_Section' },
+    { key: 10, label: 'ILD_log10' },
+    { key: 11, label: 'DeltaPHI' },
+    { key: 12, label: 'PHIND' },
+    { key: 13, label: 'PE' },
+    { key: 14, label: 'NM_M' },
+    { key: 15, label: 'RELPOS' },
 ]);
+
 const inputWellLogKinds = ref([]);
 const outputWellLogKinds = ref([]);
 
@@ -156,11 +198,96 @@ const tasks = ref([
         description: '利用测井曲线及智能算法进行岩性识别'
     }
 ]);
+const drawerVisible = ref(false); // 控制抽屉的显示与隐藏
+const tasksLists = ref([]);
+// 进度条进度
+const percentage = ref(0)
+// 进度条颜色
+const colors = [
+    { color: '#f56c6c', percentage: 20 },
+    { color: '#e6a23c', percentage: 40 },
+    { color: '#5cb87a', percentage: 60 },
+    { color: '#1989fa', percentage: 80 },
+    { color: '#6f7ad3', percentage: 100 },
+]
+
+onMounted(async () => {
+    try {
+        const res = await getDataSetLists();
+        if (res.status === "success") {
+            res.data.forEach(tableName => {
+                datasets.value.push({ value: tableName, label: tableName.replace(/^t_dataset_/, '') })
+            })
+        } else {
+            ElMessage({
+                type: 'warning',
+                message: '数据集信息获取失败！'
+            });
+        }
+    } catch (error) {
+        console.error('获取数据集列表失败:', error);
+        ElMessage({
+            type: 'error',
+            message: '获取数据集列表失败'
+        });
+    }
+})
+
+// 打开抽屉
+const openDrawer = async () => {
+    drawerVisible.value = true
+    try {
+        const res = await getTaskLists();
+        if (res.status === "success") {
+            console.log("res...",res)
+            tasksLists.value = []
+            res.data.forEach(data => {
+                let dataTime = data.CreatedAt.substring(0, 19).replace('T', ' ');
+
+                let dataType = ''
+                if (data.taskkinds === 'prediction') {
+                    dataType = "未钻地层预测"
+                } else if (data.taskkinds === 'completion') {
+                    dataType = "缺失补全"
+                } else if (data.taskkinds === 'correction') {
+                    dataType = "井径矫正"
+                } else if (data.taskkinds === 'recognize') {
+                    dataType = "岩性识别"
+                }
+
+                let dataStatus = ''
+                if (data.status === 'nostart') {
+                    dataStatus = "未开始"
+                } else if (data.status === 'completed') {
+                    dataStatus = "已完成"
+                } if (data.status === 'inprogress') {
+                    dataStatus = "进行中"
+                }
+                tasksLists.value.push({ id: data.ID, createdAt: dataTime, type: dataType, status: dataStatus },)
+            })
+            // 进度条
+            setInterval(() => {
+                percentage.value = (percentage.value % 100) + 10
+            }, 500)
+        } else {
+            ElMessage({
+                type: 'warning',
+                message: '任务信息为空，请先新建任务！'
+            });
+        }
+    } catch (error) {
+        console.error('获取任务列表失败:', error);
+        ElMessage({
+            type: 'error',
+            message: '获取任务列表失败'
+        });
+    }
+}
 
 // 根据 selectedTask 返回不同的描述
 const getDescription = () => {
     if (selectedTask.value === 'prediction' || selectedTask.value === 'completion' || selectedTask.value === 'correction') {
-        return '选择输出测井曲线（单条）';
+        return '选择输出测井曲线';
     } else if (selectedTask.value === 'recognize') {
         return '输出岩性'; // 替换为其他情况的描述
     }
@@ -180,8 +307,6 @@ const prevStep = () => {
 };
 
 const nextStep = () => {
-    console.log("selectedTask....", selectedTask.value)
-
     if (activeStep.value < 5) {
         if ((activeStep.value === 0 && selectedTask.value === '') ||
             (activeStep.value === 1 && selectedDatasets.value === '') ||
@@ -202,12 +327,7 @@ const nextStep = () => {
             return
         }
 
-        if (activeStep.value === 4 && selectedTask.value === 'recognize') {
-            console.log("删了。。。")
-        }
-
         activeStep.value++
-        console.log("activeStep....", activeStep.value)
     }
 };
 
@@ -228,18 +348,133 @@ const getTaskLabel = (selectedKey) => {
     return task ? task.label : '';
 };
 
-const confirm = () => {
-    console.log("ss")
+const confirm = async () => {
+    const dataSetInfo = {
+        taskkinds: selectedTask.value,
+        datasets: selectedDatasets.value,
+        selectedmodel: selectedModel.value,
+        inputwelllogkinds: getWellLogLabel(inputWellLogKinds.value),
+        outputwelllogkinds: getWellLogLabel(outputWellLogKinds.value),
+    }
+    var res = await addNewTask(dataSetInfo);
+
+    if (res.status === "success") {
+        ElMessage({
+            type: 'success',
+            message: '任务新建成功！'
+        })
+        selectedTask.value = ''
+        selectedDatasets.value = ''
+        selectedModel.value = ''
+        inputWellLogKinds.value = []
+        outputWellLogKinds.value = []
+        activeStep.value = 0
+    } else {
+        ElMessage({
+            type: 'error',
+            message: '任务新建失败！'
+        })
+    }
 }
 
 const updatePredictModel = (newMsg) => {
-    console.log("父  newMsg....", newMsg)
     selectedModel.value = newMsg
 }
 
 </script>
 
 <style scoped>
+.container {
+    /* 使按钮可以绝对定位 */
+    position: relative;
+}
+
+.open-drawer-button {
+    position: absolute;
+    width: 110px;
+    height: 40px;
+    right: -25px;
+    top: 50%;
+    transform: translateY(-50%) rotate(90deg);
+}
+
+/* 悬浮样式 */
+.open-drawer-button:hover {
+    /* 悬浮时的背景色 */
+    background-color: #4CAF50;
+    /* 悬浮时放大按钮 */
+    transform: translateY(-50%) scale(1.2) rotate(90deg);
+    /* 添加阴影效果 */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.task-list {
+    list-style-type: none;
+    /* 去掉列表项的默认样式 */
+    padding: 0;
+    /* 去掉内边距 */
+    margin: 0;
+    /* 去掉外边距 */
+}
+
+.task-item {
+    padding: 10px;
+    /* 列表项的内边距 */
+    border-bottom: 1px solid #e4e7ed;
+    /* 列表项的底部边框 */
+    display: flex;
+    /* 使用 flexbox 布局 */
+    justify-content: space-between;
+    /* 在行内分配空间 */
+}
+
+.task-details {
+    display: flex;
+    /* 使用 flexbox 布局 */
+    justify-content: space-between;
+    /* 在行内分配空间 */
+    width: 100%;
+    /* 使任务详情占满整个宽度 */
+}
+
+.task-time,
+.task-type {
+    flex: 1;
+    /* 每个字段占据相同的空间 */
+    text-align: left;
+    /* 文字居中对齐 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.task-status {
+    flex: 1;
+    /* 占据相同的空间 */
+    text-align: center;
+    /* 文字居中对齐 */
+    padding: 5px;
+    /* 添加内边距 */
+}
+
+/* 已完成 */
+.completed {
+    background-color: rgb(131, 218, 87);
+    color: rgb(255, 255, 255);
+    border-radius: 5px;
+}
+
+/* 进行中 */
+.in-progress {}
+
+/* 未开始 */
+.no-start {
+    background-color: rgb(177, 179, 184);
+    border-radius: 5px;
+}
+
+/* 进度条 */
+
 .steps-wrapper {
     display: flex;
     justify-content: center;

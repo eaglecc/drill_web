@@ -22,3 +22,17 @@ export function getDataSetByName(data) {
     data
   })
 }
+
+export function addNewTask(data) {
+  return request({
+    url: 'task/addNewTask',
+    method: 'POST',
+    data
+  })
+}
+export function getTaskLists() {
+  return request({
+    url: 'task/getTaskLists',
+    method: 'GET'
+  })
+}
