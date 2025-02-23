@@ -49,9 +49,12 @@ const getImageSrcList = (imgName) => {
 
 // 选择卡片的函数
 const selectCard = (title) => {
-    console.log("选中id。。。",title)
     selectedCardTitle.value = selectedCardTitle.value === title ? null : title;  // 切换选中状态
+    emit('update-message', title)
 }
+
+// 使用 defineEmits 定义要向父组件发送的事件
+const emit = defineEmits(['update-message'])
 
 </script>
 

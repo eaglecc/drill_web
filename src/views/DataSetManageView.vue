@@ -5,22 +5,18 @@
         <div class="upload-container">
           <el-upload class="upload-demo" action="" :show-file-list="false" accept=".xls,.xlsx,.csv"
             :before-upload="handleFileUpload">
-            <el-button type="primary">上传 Excel 数据文件</el-button>
+            <el-button type="primary" class="custom-button">上传Excel数据集文件</el-button>
           </el-upload>
         </div>
-
         <el-scrollbar class="file-list-scrollbar">
-          <ul class="file-list">
-            <li v-for="(file, index) in fileList" :key="index" @click="handleFileClick(file)"
-              :class="{ 'active': selectedFile && selectedFile.name === file.name }">
-              {{ file.name.replace(/^t_dataset_/, '') }}
-            </li>
-          </ul>
+          <p v-for="(file, index) in fileList" :key="index" @click="handleFileClick(file)"
+            :class="['scrollbar-item', { 'scrollbar-item-selected': selectedFile === file }]">
+            {{ file.name.replace(/^t_dataset_/, '') }}</p>
         </el-scrollbar>
       </el-aside>
 
       <el-main class="main-wrapper">
-        <el-table v-if="excelData.length" :data="excelData" height=100% border stripe :scrollbar-always-on="true"
+        <el-table v-if="excelData.length" :data="excelData" height=100% stripe :scrollbar-always-on="true"
           class="transparent-table">
           <el-table-column v-for="(header, index) in headers" :key="index" :prop="header" :label="header" />
         </el-table>
@@ -195,43 +191,50 @@ const handleFileClick = async (file) => {
   padding: 20px 0;
 }
 
+/* 新增样式以设置按钮的背景色 */
+.custom-button {
+  background-color: #4CAF50;
+  /* 设置按钮背景色 */
+  border-color: #4CAF50;
+  /* 设置按钮边框颜色 */
+  color: white;
+  /* 设置按钮文字颜色 */
+}
+
+/* 可选：设置按钮悬停时的背景色 */
+.custom-button:hover {
+  background-color: #45a049;
+  /* 悬停时的背景色 */
+  border-color: #45a049;
+  /* 悬停时的边框颜色 */
+}
+
 .excel-uploader {
   padding: 20px;
 }
 
 .file-list-scrollbar {
-  height: calc(100% - 100px);
-  /* 减去上传按钮区域的高度 */
+  height: 80vh;
   margin-top: 10px;
 }
 
-.file-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.scrollbar-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+  margin: 10px;
+  text-align: center;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.1);
+  color: #E0E0E0;
+  user-select: none;
 }
 
-
-.file-list li {
-  padding: 8px 16px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-  color: white;
+.scrollbar-item-selected {
+  background-color: rgba(255,255,255,0.5);
+  /* 设置选中时的背景色 */
 }
-
-.file-list li.active {
-  background-color: #409EFF;
-  color: white;
-}
-
-.file-list li:hover {
-  background-color: #5f6061;
-}
-
-.file-list li.active:hover {
-  background-color: #409EFF;
-}
-
 
 .main-wrapper {
   height: 100%;
@@ -244,17 +247,20 @@ const handleFileClick = async (file) => {
 } */
 
 /* 让表格背景透明 */
+
 :deep(.el-table) {
-  background: transparent !important;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid transparent;
 }
 
 :deep(.el-table tr) {
   background: transparent !important;
 }
 
-:deep(.el-table th) {
-  background: transparent !important;
+:deep(.el-table thead th) {
+  background-color: rgba(255, 255, 255, 0.2);
   color: white;
+  font-weight: 700;
 }
 
 :deep(.el-table td) {
@@ -262,4 +268,23 @@ const handleFileClick = async (file) => {
   color: white;
 }
 
+/* 设置网格线颜色 */
+:deep(.el-table .el-table__body tr td) {
+  border-right: 1px solid #444444;
+  /* 设置单元格右侧边框颜色 */
+  border-bottom: 1px solid #444444;
+}
+
+:deep(.el-table .el-table__header th) {
+  border-right: 1px solid #444444;
+  /* 设置表头右侧边框颜色 */
+}
+
+:deep(.el-table--striped tr.el-table__row--striped td) {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+:deep(.el-table__body tr:hover > td) {
+  background-color: rgba(255, 255, 255, 0.06);
+}
 </style>

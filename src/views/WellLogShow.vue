@@ -2,7 +2,7 @@
   <div class="common-layout">
     <el-container>
       <el-aside style="width: 19%; height: 100%;">
-        <h3 style="text-align: center; margin: 10px 0; color: #fff;">测井数据集列表</h3>
+        <p style="text-align: center; margin: 10px 0; color: #fff; font-size: 20px;">测井数据集列表</p>
         <el-scrollbar class="file-list-scrollbar">
           <p v-for="(file, index) in fileList" :key="index" @click="handleFileClick(file)"
             :class="['scrollbar-item', { 'scrollbar-item-selected': selectedFile === file }]">
@@ -198,13 +198,13 @@ onBeforeUnmount(() => {
   margin: 10px;
   text-align: center;
   border-radius: 4px;
-  background: var(--el-color-primary-light-9);
-  color: var(--el-color-primary);
+  background: rgba(255,255,255,0.1);
+  color: #E0E0E0;
   user-select: none;
 }
 
 .scrollbar-item-selected {
-  background-color: var(--el-color-primary-light-5);
+  background-color: rgba(255,255,255,0.5);
   /* 设置选中时的背景色 */
 }
 
