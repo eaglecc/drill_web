@@ -113,7 +113,7 @@
                             <span class="task-time">{{ task.createdAt }}</span>
                             <span class="task-type">{{ task.type }}</span>
                             <span class="task-status"
-                                :class="{ 'completed': task.status === '已完成', 'in-progress': task.status === '进行中', 'no-start': task.status === '未开始' }">
+                                :class="{ 'completed': task.status === '已完成', 'no-start': task.status === '未开始' }">
                                 <template v-if="task.status === '已完成'">
                                     {{ task.status }}
                                 </template>
@@ -239,7 +239,6 @@ const openDrawer = async () => {
     try {
         const res = await getTaskLists();
         if (res.status === "success") {
-            console.log("res...",res)
             tasksLists.value = []
             res.data.forEach(data => {
                 let dataTime = data.CreatedAt.substring(0, 19).replace('T', ' ');
@@ -266,9 +265,9 @@ const openDrawer = async () => {
                 tasksLists.value.push({ id: data.ID, createdAt: dataTime, type: dataType, status: dataStatus },)
             })
             // 进度条
-            setInterval(() => {
-                percentage.value = (percentage.value % 100) + 10
-            }, 500)
+            // setInterval(() => {
+            //     percentage.value = (percentage.value % 100) + 10
+            // }, 500)
         } else {
             ElMessage({
                 type: 'warning',
@@ -463,9 +462,6 @@ const updatePredictModel = (newMsg) => {
     color: rgb(255, 255, 255);
     border-radius: 5px;
 }
-
-/* 进行中 */
-.in-progress {}
 
 /* 未开始 */
 .no-start {

@@ -19,11 +19,15 @@ const router = createRouter({
       name: 'showWellLog',
       component: () => import('../views/WellLogShow.vue'),
     },
-    ,
     {
-      path: '/',
+      path: '/watchWellLog',
       name: 'watchWellLog',
       component: () => import('../views/WellLogWatch.vue'),
+    },
+    {
+      path: '/showTasks',
+      name: 'showTasks',
+      component: () => import('../views/TaskResultShow.vue'),
     },
   ],
 })

@@ -198,13 +198,13 @@ onBeforeUnmount(() => {
   margin: 10px;
   text-align: center;
   border-radius: 4px;
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
   color: #E0E0E0;
   user-select: none;
 }
 
 .scrollbar-item-selected {
-  background-color: rgba(255,255,255,0.5);
+  background-color: rgba(255, 255, 255, 0.5);
   /* 设置选中时的背景色 */
 }
 
