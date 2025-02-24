@@ -105,20 +105,21 @@
         <el-button class="open-drawer-button" type="success" @click="openDrawer()">打开任务列表</el-button>
 
         <!-- el-drawer 组件 -->
-        <el-drawer title="任务列表" v-model="drawerVisible" size="30%" @close="drawerVisible = false">
+        <el-drawer title="任务列表" v-model="drawerVisible" size="30%" @close="closeDrawer()">
             <el-scrollbar style="height: 100%;">
                 <ul class="task-list">
                     <li v-for="task in tasksLists" :key="task.id" class="task-item">
                         <div class="task-details">
                             <span class="task-time">{{ task.createdAt }}</span>
                             <span class="task-type">{{ task.type }}</span>
-                            <span class="task-status"
-                                :class="{ 'completed': task.status === '已完成', 'no-start': task.status === '未开始' }">
+                            <span class="task-status" :class="{ 'completed': task.status === '已完成' }">
                                 <template v-if="task.status === '已完成'">
-                                    {{ task.status }}
+                                    <el-button type="success">{{ task.status }}</el-button>
                                 </template>
                                 <template v-if="task.status === '未开始'">
-                                    {{ task.status }}
+                                    <el-tooltip content="点击开始执行" placement="bottom">
+                                        <el-button type="info" @click="startStatus(task)">{{ task.status }}</el-button>
+                                    </el-tooltip>
                                 </template>
                                 <template v-if="task.status === '进行中'">
                                     <el-progress type="circle" :percentage="percentage" :color="colors"
@@ -137,7 +138,7 @@
 import { ref, onMounted } from "vue";
 import { ElMessage } from 'element-plus'
 import { DataLine, TrendCharts, DataAnalysis, HelpFilled } from '@element-plus/icons-vue'  // 添加这行导入语句
-import { addNewTask, getDataSetLists, getTaskLists } from '@/api/DataSetApi'
+import { addNewTask, getDataSetLists, getTaskLists, updateTaskById } from '@/api/DataSetApi'
 import PredModelSelect from '@/components/PredModelSelectComponent.vue'
 import RecognitionModelSelectComponent from "@/components/RecognitionModelSelectComponent.vue";
 
@@ -210,6 +211,8 @@ const colors = [
     { color: '#1989fa', percentage: 80 },
     { color: '#6f7ad3', percentage: 100 },
 ]
+let intervalId = null;
+
 
 onMounted(async () => {
     try {
@@ -264,10 +267,6 @@ const openDrawer = async () => {
                 }
                 tasksLists.value.push({ id: data.ID, createdAt: dataTime, type: dataType, status: dataStatus },)
             })
-            // 进度条
-            // setInterval(() => {
-            //     percentage.value = (percentage.value % 100) + 10
-            // }, 500)
         } else {
             ElMessage({
                 type: 'warning',
@@ -280,6 +279,47 @@ const openDrawer = async () => {
             type: 'error',
             message: '获取任务列表失败'
         });
+    }
+}
+
+// 关闭抽屉
+const closeDrawer = async () => {
+    drawerVisible.value = false;
+    clearInterval(intervalId);
+}
+
+// 开始执行一个任务
+const startStatus = async (task) => {
+    const newTask = tasksLists.value.find(item => item.id === task.id)
+    console.log("newTask,...", newTask)
+    if (newTask) {
+        const dataSetInfo = {
+            id: newTask.id
+        }
+        var res = await updateTaskById(dataSetInfo);
+        if (res.status === "success") {
+            ElMessage({
+                type: 'success',
+                message: '任务启动成功！'
+            })
+        } else {
+            ElMessage({
+                type: 'error',
+                message: '任务启动失败！'
+            })
+        }
+
+        tasksLists.value.find(item => item.id === task.id).status = '进行中'
+        // 进度条
+        intervalId = setInterval(() => {
+            percentage.value = (percentage.value % 100) + 10
+            if (percentage.value === 100) {
+                tasksLists.value.find(item => item.id === task.id).status = '已完成'
+                clearInterval(intervalId);
+            }
+        }, 5000)
+    } else {
+        console.log(`未找到 ID 为 ${task.id} 的任务`);
     }
 }
 
@@ -454,19 +494,6 @@ const updatePredictModel = (newMsg) => {
     /* 文字居中对齐 */
     padding: 5px;
     /* 添加内边距 */
-}
-
-/* 已完成 */
-.completed {
-    background-color: rgb(131, 218, 87);
-    color: rgb(255, 255, 255);
-    border-radius: 5px;
-}
-
-/* 未开始 */
-.no-start {
-    background-color: rgb(177, 179, 184);
-    border-radius: 5px;
 }
 
 /* 进度条 */

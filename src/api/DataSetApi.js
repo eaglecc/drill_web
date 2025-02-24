@@ -36,3 +36,11 @@ export function getTaskLists() {
     method: 'GET'
   })
 }
+
+export function updateTaskById(data) {
+  return request({
+    url: 'task/updateTaskById',
+    method: 'POST',
+    data
+  })
+}
