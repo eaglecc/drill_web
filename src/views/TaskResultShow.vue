@@ -120,28 +120,30 @@ onMounted(async () => {
             console.log("res...", res)
             taskList.value = []
             res.data.forEach(data => {
-                let dataTime = data.CreatedAt.substring(0, 10).replace('T', ' ');
+                if (data.status === 'completed') { // 仅展示完成的任务
+                    let dataTime = data.CreatedAt.substring(0, 10).replace('T', ' ');
 
-                let dataType = ''
-                if (data.taskkinds === 'prediction') {
-                    dataType = "未钻地层预测"
-                } else if (data.taskkinds === 'completion') {
-                    dataType = "缺失补全"
-                } else if (data.taskkinds === 'correction') {
-                    dataType = "井径矫正"
-                } else if (data.taskkinds === 'recognize') {
-                    dataType = "岩性识别"
-                }
+                    let dataType = ''
+                    if (data.taskkinds === 'prediction') {
+                        dataType = "未钻地层预测"
+                    } else if (data.taskkinds === 'completion') {
+                        dataType = "缺失补全"
+                    } else if (data.taskkinds === 'correction') {
+                        dataType = "井径矫正"
+                    } else if (data.taskkinds === 'recognize') {
+                        dataType = "岩性识别"
+                    }
 
-                let dataStatus = ''
-                if (data.status === 'nostart') {
-                    dataStatus = "未开始"
-                } else if (data.status === 'completed') {
-                    dataStatus = "已完成"
-                } if (data.status === 'inprogress') {
-                    dataStatus = "进行中"
+                    let dataStatus = ''
+                    if (data.status === 'nostart') {
+                        dataStatus = "未开始"
+                    } else if (data.status === 'completed') {
+                        dataStatus = "已完成"
+                    } if (data.status === 'inprogress') {
+                        dataStatus = "进行中"
+                    }
+                    taskList.value.push({ id: data.ID, createdAt: dataTime, type: dataType, status: dataStatus },)
                 }
-                taskList.value.push({ id: data.ID, createdAt: dataTime, type: dataType, status: dataStatus },)
             })
 
         } else {

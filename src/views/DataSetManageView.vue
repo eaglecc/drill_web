@@ -5,7 +5,7 @@
         <div class="upload-container">
           <el-upload class="upload-demo" action="" :show-file-list="false" accept=".xls,.xlsx,.csv"
             :before-upload="handleFileUpload">
-            <el-button type="primary" class="custom-button">上传Excel数据集文件</el-button>
+            <el-button type="primary" class="custom-button">上传数据集文件</el-button>
           </el-upload>
         </div>
         <el-scrollbar class="file-list-scrollbar">
