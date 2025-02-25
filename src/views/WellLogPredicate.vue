@@ -372,6 +372,7 @@ const datasetChange = async (dataName) => {
             type: 'success',
             message: '获取测井曲线信息成功！'
         })
+        wellLogKinds.value = []
         res.data.forEach((item, index) => {
             wellLogKinds.value.push({key: index , label: item});
         });
