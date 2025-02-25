@@ -35,7 +35,8 @@
                     </div>
                     <div v-if="activeStep === 1">
                         <p style="text-align: center;font-size: 20px; color: #fff; margin-bottom: 30px;">请选择测井数据集</p>
-                        <el-select v-model="selectedDatasets" placeholder="请选择数据集" size="large">
+                        <el-select v-model="selectedDatasets" @change="datasetChange(selectedDatasets)"
+                            placeholder="请选择数据集" size="large">
                             <el-option v-for="item in datasets" :key="item.value" :label="item.label"
                                 :value="item.value" />
                         </el-select>
@@ -138,7 +139,7 @@
 import { ref, onMounted } from "vue";
 import { ElMessage } from 'element-plus'
 import { DataLine, TrendCharts, DataAnalysis, HelpFilled } from '@element-plus/icons-vue'  // 添加这行导入语句
-import { addNewTask, getDataSetLists, getTaskLists, updateTaskById } from '@/api/DataSetApi'
+import { addNewTask, getDataSetLists, getTaskLists, updateTaskById, getTableInfoByTableName } from '@/api/DataSetApi'
 import PredModelSelect from '@/components/PredModelSelectComponent.vue'
 import RecognitionModelSelectComponent from "@/components/RecognitionModelSelectComponent.vue";
 
@@ -148,23 +149,7 @@ const datasets = ref([]);
 const selectedDatasets = ref('');
 
 // 测井曲线种类穿梭框数据
-const wellLogKinds = ref([
-    { key: 1, label: 'CAL' },
-    { key: 2, label: 'GR' },
-    { key: 3, label: 'SP' },
-    { key: 4, label: 'LLD' },
-    { key: 5, label: 'LLS' },
-    { key: 6, label: 'AC' },
-    { key: 7, label: 'DEN' },
-    { key: 8, label: 'PEF' },
-    { key: 9, label: 'Lith_Section' },
-    { key: 10, label: 'ILD_log10' },
-    { key: 11, label: 'DeltaPHI' },
-    { key: 12, label: 'PHIND' },
-    { key: 13, label: 'PE' },
-    { key: 14, label: 'NM_M' },
-    { key: 15, label: 'RELPOS' },
-]);
+const wellLogKinds = ref([]);
 
 const inputWellLogKinds = ref([]);
 const outputWellLogKinds = ref([]);
@@ -339,12 +324,15 @@ const getTitle = () => {
         return 'Step 5';
     }
 }
+
+// 上一步
 const prevStep = () => {
     if (activeStep.value > 0) {
         activeStep.value--;
     }
 };
 
+// 下一步
 const nextStep = () => {
     if (activeStep.value < 5) {
         if ((activeStep.value === 0 && selectedTask.value === '') ||
@@ -369,6 +357,32 @@ const nextStep = () => {
         activeStep.value++
     }
 };
+
+// 数据集改变
+const datasetChange = async (dataName) => {
+    console.log("dataName....", dataName)
+    // 根据表名查询表结构信息
+    const dataSetInfo = {
+        tableName: dataName
+    }
+    const res = await getTableInfoByTableName(dataSetInfo);
+    console.log("表信息。。。", res)
+    if (res.status === "success") {
+        ElMessage({
+            type: 'success',
+            message: '获取测井曲线信息成功！'
+        })
+        res.data.forEach((item, index) => {
+            wellLogKinds.value.push({key: index , label: item});
+        });
+        return
+    } else {
+        ElMessage({
+            type: 'error',
+            message: '该数据集下没有测井曲线信息！'
+        })
+    }
+}
 
 const getDatasetLabels = (selectedKeys) => {
     const task = datasets.value.find(data => data.value === selectedKeys);

@@ -44,3 +44,11 @@ export function updateTaskById(data) {
     data
   })
 }
+
+export function getTableInfoByTableName(data) {
+  return request({
+    url: 'task/getTableInfoByTableName',
+    method: 'POST',
+    data
+  })
+}

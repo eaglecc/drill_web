@@ -1,6 +1,7 @@
 # drill_web
 
 基于测井曲线的岩性识别系统Vue端
+工具：Vue3、ElementPlus、ECharts、axios
 
 接口信息：
 BASEURL：http://localhost:5173/
