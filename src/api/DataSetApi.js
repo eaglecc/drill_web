@@ -52,3 +52,11 @@ export function getTableInfoByTableName(data) {
     data
   })
 }
+
+export function getTaskResByID(data) {
+  return request({
+    url: 'task/getTaskResByID',
+    method: 'POST',
+    data
+  })
+}

@@ -290,7 +290,7 @@ const startStatus = async (task) => {
         } else {
             ElMessage({
                 type: 'error',
-                message: '任务启动失败！'
+                message: '任务启动失败！请稍后再试或联系管理员处理！'
             })
         }
 
@@ -360,13 +360,11 @@ const nextStep = () => {
 
 // 数据集改变
 const datasetChange = async (dataName) => {
-    console.log("dataName....", dataName)
     // 根据表名查询表结构信息
     const dataSetInfo = {
         tableName: dataName
     }
     const res = await getTableInfoByTableName(dataSetInfo);
-    console.log("表信息。。。", res)
     if (res.status === "success") {
         ElMessage({
             type: 'success',
