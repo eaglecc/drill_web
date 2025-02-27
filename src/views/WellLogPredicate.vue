@@ -140,7 +140,7 @@ import { ref, onMounted } from "vue";
 import { ElMessage } from 'element-plus'
 import { DataLine, TrendCharts, DataAnalysis, HelpFilled } from '@element-plus/icons-vue'  // 添加这行导入语句
 import { addNewTask, getDataSetLists, getTaskLists, updateTaskById, getTableInfoByTableName } from '@/api/DataSetApi'
-import PredModelSelect from '@/components/PredModelSelectComponent.vue'
+import PredModelSelect from '@/components/PredModelSelectComponent.vue';
 import RecognitionModelSelectComponent from "@/components/RecognitionModelSelectComponent.vue";
 
 const activeStep = ref(0);

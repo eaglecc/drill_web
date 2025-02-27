@@ -78,7 +78,7 @@
                         <el-col :span="12" class="task-info-col">
                             <p><strong>输入曲线种类：</strong> {{ selectedTask.inputWellLogKinds }}</p>
                         </el-col>
-                        <el-col :span="12" class="task-info-col">
+                        <el-col :span="12" class="task-info-col" v-if="selectedTask.type === '未钻地层预测' || selectedTask.type === '缺失补全' || selectedTask.type === '井径矫正' ">
                             <p><strong>输出曲线种类：</strong> {{ selectedTask.outputWellLogKinds }}</p>
                         </el-col>
                         <el-col :span="12" class="task-info-col">
@@ -149,9 +149,9 @@ const handleTaskClick = async (task) => {
             minXValue = Math.min(...xAxisData.value);  // 获取 xAxisData 中的最小值
             maxXValue = Math.max(...xAxisData.value);  // 获取 xAxisData 中的最大值
             randomArea1Start = minXValue + 50
-            randomArea1End = randomArea1Start + 100
-            randomArea2Start = randomArea1End + 400
-            randomArea2End = randomArea2Start + 80
+            randomArea1End = randomArea1Start + 20
+            randomArea2Start = randomArea1End + 80
+            randomArea2End = randomArea2Start + 30
             initChart();
 
         } else if (selectedTask.value.type === '岩性识别') {
